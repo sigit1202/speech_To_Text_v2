@@ -4,13 +4,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 from collections import defaultdict, OrderedDict
 from difflib import get_close_matches
 import os
-import os
-import json
-
 google_credentials = os.getenv("GOOGLE_CREDENTIALS")
-
-if not google_credentials:
-    raise ValueError("Environment variable GOOGLE_CREDENTIALS is missing or empty")
+print(google_credentials)  # Debugging: cek apakah nilai variabel ini kosong atau tidak
+REDENTIALS is missing or empty")
 
 creds_dict = json.loads(google_credentials)
 
