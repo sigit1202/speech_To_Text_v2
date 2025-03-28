@@ -4,23 +4,24 @@ from oauth2client.service_account import ServiceAccountCredentials
 from collections import defaultdict, OrderedDict
 from difflib import get_close_matches
 import os
-google_credentials = os.getenv("GOOGLE_CREDENTIALS")
-print(google_credentials)  # Debugging: cek apakah nilai variabel ini kosong atau tidak
-REDENTIALS is missing or empty")
-
-creds_dict = json.loads(google_credentials)
-
-app = Flask(__name__)
-
-# 🔗 Setup Google Sheets API
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 import json
-import os
 
-creds_dict = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+# 🔗 Ambil kredensial Google dari Environment Variable
+google_credentials = os.getenv("GOOGLE_CREDENTIALS")
 
-client = gspread.authorize(creds)
+if not google_credentials:
+    raise ValueError("GOOGLE_CREDENTIALS is missing or empty")
+
+try:
+    creds_dict = json.loads(google_credentials)
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+except Exception as e:
+    raise ValueError(f"Error loading Google credentials: {e}")
 
 # 🔍 Buka Google Sheets
 SHEET_ID = "1cpzDf5mI1bm6U5JlfMvxolltI4Abrch2Ed4JQF4RoiA"
@@ -32,6 +33,8 @@ URUTAN_BULAN = {
     "juli": 7, "agustus": 8, "september": 9, "oktober": 10, "november": 11, "desember": 12
 }
 
+app = Flask(__name__)
+
 # 🎯 Fungsi untuk mencari kata terdekat (Fuzzy Matching)
 def find_closest_match(query, choices):
     matches = get_close_matches(query, choices, n=1, cutoff=0.6)
@@ -41,11 +44,11 @@ def find_closest_match(query, choices):
 def home():
     return jsonify({"message": "API Flask berjalan dengan baik!"})
 
-# 🎤 Endpoint utama untuk pencarian STT berdasarkan kota asal & tujuan
+# 🎤 Endpoint pencarian STT berdasarkan kota asal & tujuan
 @app.route('/search_all_months', methods=['GET'])
 def search_all_months():
-    kota_asal = request.args.get('Kota_Asal', '').strip()
-    kota_tujuan = request.args.get('Kota_Tujuan', '').strip()
+    kota_asal = request.args.get('Kota_Asal', '').strip().lower()
+    kota_tujuan = request.args.get('Kota_Tujuan', '').strip().lower()
 
     if not kota_asal or not kota_tujuan:
         return jsonify({"error": "Kota_Asal dan Kota_Tujuan harus diisi"}), 400
@@ -56,19 +59,17 @@ def search_all_months():
     try:
         data = sheet.get_all_records()
         if not data:
-            print("⚠️ Data di Google Sheet kosong!")
             return jsonify({"error": "Data tidak ditemukan di Google Sheet"}), 404
     except Exception as e:
-        print(f"❌ Error mengambil data dari Google Sheets: {e}")
-        return jsonify({"error": "Gagal mengambil data dari Google Sheets"}), 500
+        return jsonify({"error": f"Gagal mengambil data dari Google Sheets: {e}"}), 500
 
     # 🏙️ Ambil daftar kota untuk fuzzy matching
     daftar_kota_asal = {row["Kota Asal"].strip().lower() for row in data}
     daftar_kota_tujuan = {row["Kota Tujuan"].strip().lower() for row in data}
 
     # 🔍 Terapkan fuzzy matching pada input pengguna
-    kota_asal = find_closest_match(kota_asal.lower(), daftar_kota_asal)
-    kota_tujuan = find_closest_match(kota_tujuan.lower(), daftar_kota_tujuan)
+    kota_asal = find_closest_match(kota_asal, daftar_kota_asal)
+    kota_tujuan = find_closest_match(kota_tujuan, daftar_kota_tujuan)
 
     hasil_per_bulan = defaultdict(int)
 
@@ -87,7 +88,6 @@ def search_all_months():
 
     # 📊 Cek apakah ada hasil yang ditemukan
     if not hasil_per_bulan:
-        print("❌ Tidak ada data yang cocok.")
         return jsonify({"error": "Tidak ada data untuk kota asal dan tujuan yang diminta"}), 404
 
     # 📅 Urutkan hasil berdasarkan urutan bulan
@@ -105,10 +105,6 @@ def search_all_months():
     print(f"✅ Hasil pencarian: {response_data}")
     return jsonify(response_data)
 
-# 🚀 Jalankan Flask (Gunakan Port dari Environment Variable agar bisa jalan di Render)
-# if __name__ == '__main__':
-#    port = int(os.environ.get("PORT", 5000))  # Render butuh port dari environment
-#   app.run(debug=True, host='0.0.0.0', port=port)
-
+# 🚀 Jalankan Flask
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
