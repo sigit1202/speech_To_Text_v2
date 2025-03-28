@@ -96,6 +96,9 @@ def search_all_months():
     return jsonify(response_data)
 
 # 🚀 Jalankan Flask (Gunakan Port dari Environment Variable agar bisa jalan di Render)
+# if __name__ == '__main__':
+#    port = int(os.environ.get("PORT", 5000))  # Render butuh port dari environment
+#   app.run(debug=True, host='0.0.0.0', port=port)
+
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Render butuh port dari environment
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
