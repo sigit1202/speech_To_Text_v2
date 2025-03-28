@@ -1,24 +1,31 @@
 from flask import Flask, request, jsonify
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import json
+import os
+from google.oauth2.service_account import Credentials
 from collections import defaultdict, OrderedDict
 from difflib import get_close_matches
-import os
-import json
 
+# ✅ Ambil kredensial Google Sheets dari environment variable
 google_credentials = os.getenv("GOOGLE_CREDENTIALS")
-
 if not google_credentials:
-    raise ValueError("Error: GOOGLE_CREDENTIALS tidak ditemukan atau kosong!")
+    raise ValueError("❌ Error: GOOGLE_CREDENTIALS tidak ditemukan atau kosong!")
 
 try:
     creds_dict = json.loads(google_credentials)
+    creds = Credentials.from_service_account_info(creds_dict, scopes=["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"])
+    client = gspread.authorize(creds)
 except json.JSONDecodeError:
-    raise ValueError("Error: Format JSON GOOGLE_CREDENTIALS salah!")
+    raise ValueError("❌ Error: Format JSON GOOGLE_CREDENTIALS salah!")
 
-# 🔍 Buka Google Sheets
+# ✅ ID Google Sheets
 SHEET_ID = "1cpzDf5mI1bm6U5JlfMvxolltI4Abrch2Ed4JQF4RoiA"
-sheet = client.open_by_key("1cpzDf5mI1bm6U5JlfMvxolltI4Abrch2Ed4JQF4RoiA").worksheet("Sheet2")
+
+# ✅ Coba akses Google Sheets
+try:
+    sheet = client.open_by_key(SHEET_ID).worksheet("Sheet2")
+except Exception as e:
+    raise ValueError(f"❌ Error: Gagal mengakses Google Sheets - {e}")
 
 # 📅 Urutan bulan untuk penyortiran
 URUTAN_BULAN = {
