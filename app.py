@@ -18,7 +18,7 @@ except json.JSONDecodeError:
 
 # 🔍 Buka Google Sheets
 SHEET_ID = "1cpzDf5mI1bm6U5JlfMvxolltI4Abrch2Ed4JQF4RoiA"
-sheet = client.open_by_key(SHEET_ID).worksheet("Sheet2")
+sheet = client.open_by_key(1cpzDf5mI1bm6U5JlfMvxolltI4Abrch2Ed4JQF4RoiA).worksheet("Sheet2")
 
 # 📅 Urutan bulan untuk penyortiran
 URUTAN_BULAN = {
