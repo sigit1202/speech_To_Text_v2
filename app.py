@@ -6,22 +6,15 @@ from difflib import get_close_matches
 import os
 import json
 
-# 🔗 Ambil kredensial Google dari Environment Variable
 google_credentials = os.getenv("GOOGLE_CREDENTIALS")
 
 if not google_credentials:
-    raise ValueError("GOOGLE_CREDENTIALS is missing or empty")
+    raise ValueError("Error: GOOGLE_CREDENTIALS tidak ditemukan atau kosong!")
 
 try:
     creds_dict = json.loads(google_credentials)
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-except Exception as e:
-    raise ValueError(f"Error loading Google credentials: {e}")
+except json.JSONDecodeError:
+    raise ValueError("Error: Format JSON GOOGLE_CREDENTIALS salah!")
 
 # 🔍 Buka Google Sheets
 SHEET_ID = "1cpzDf5mI1bm6U5JlfMvxolltI4Abrch2Ed4JQF4RoiA"
